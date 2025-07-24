@@ -20,20 +20,13 @@ module TwoFactorAuthentication
       end
 
       def handle_failed_second_factor(scope)
-        respond_to do |format|
-          format.html do
-            session["#{scope}_return_to"] = request.original_fullpath if request.get?
-            redirect_to two_factor_authentication_path_for(scope)
-          end
-          format.json do
-            session["#{scope}_return_to"] = root_path(format: :html)
-            render json: { redirect_to: two_factor_authentication_path_for(scope) },
-            status: :unauthorized
-          end
-          format.any do
-            session["#{scope}_return_to"] = request.original_fullpath if request.get?
-            redirect_to two_factor_authentication_path_for(scope)
-          end
+        if request.format.json?
+          session["#{scope}_return_to"] = root_path(format: :html)
+          render json: { redirect_to: two_factor_authentication_path_for(scope) },
+                 status: :unauthorized
+        else
+          session["#{scope}_return_to"] = request.get? ? request.original_fullpath : root_path
+          redirect_to two_factor_authentication_path_for(scope)
         end
       end
 
